@@ -1,14 +1,11 @@
 ﻿using Decidir;
 using Decidir.Constants;
+using Decidir.Exceptions;
 using Decidir.Model;
 using Decidir.Model.CyberSource;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Threading;
-using Decidir.Exceptions;
-using DecidirTest.Model;
-using Newtonsoft.Json;
-using System.Diagnostics;
 
 namespace DecidirTest
 {

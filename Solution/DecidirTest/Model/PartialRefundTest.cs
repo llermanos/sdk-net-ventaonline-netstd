@@ -1,6 +1,5 @@
-﻿using System;
+﻿using Decidir.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Decidir.Model;
 
 namespace DecidirTest.Model
 {

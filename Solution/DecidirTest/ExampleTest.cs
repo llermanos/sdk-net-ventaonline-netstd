@@ -1,11 +1,8 @@
 ﻿using Decidir;
 using Decidir.Constants;
+using Decidir.Exceptions;
 using Decidir.Model;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using Decidir.Exceptions;
 
 namespace DecidirTest
 {

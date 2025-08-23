@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Decidir.Constants;
+﻿using Decidir.Constants;
 using Decidir.Model;
 using Decidir.Services;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace Decidir
 {
