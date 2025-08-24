@@ -68,9 +68,14 @@ namespace Decidir
 
         private Dictionary<string, string> headers;
 
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IHttpClientFactory _httpClientFactory = null;
         public DecidirConnector(int ambiente, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
         {
+            init(ambiente, privateApiKey, publicApiKey, validateApiKey, merchant, grouper, developer);
+        }
+        public DecidirConnector(IHttpClientFactory httpClientFactory, int ambiente, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
+        {
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
             init(ambiente, privateApiKey, publicApiKey, validateApiKey, merchant, grouper, developer);
         }
 
@@ -80,17 +85,10 @@ namespace Decidir
             this.endpoint = request_host + request_path;
             init(-1, privateApiKey, publicApiKey, validateApiKey, merchant, grouper, developer);
         }
-
-        public DecidirConnector(IHttpClientFactory httpClientFactory, int ambiente, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
-        : this(ambiente,privateApiKey, publicApiKey,validateApiKey,merchant,grouper,developer)
-        {
-            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));   
-        }
-
         public DecidirConnector(IHttpClientFactory httpClientFactory, string request_host, string request_path, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
-        : this(request_host,request_path,privateApiKey,publicApiKey,validateApiKey,merchant,grouper,developer)  
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+            init(-1, privateApiKey, publicApiKey, validateApiKey, merchant, grouper, developer);
         }
 
 
@@ -253,6 +251,9 @@ namespace Decidir
             return this.checkoutService.CheckoutHash(CheckoutRequest);
         }
 
+
+
+        #region "Utilities"
         private string getXSource(String grouper, String developer)
         {
             Dictionary<string, string> header = new Dictionary<string, string>();
@@ -275,5 +276,6 @@ namespace Decidir
             return JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.None);
         }
 
+        #endregion
     }
 }

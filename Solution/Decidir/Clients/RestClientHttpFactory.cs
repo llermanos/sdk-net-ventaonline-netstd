@@ -18,17 +18,17 @@ namespace Decidir.Clients
     }
     internal sealed class RestClientHttpFactory : IRestClient
     {
-        protected string endpoint;
-        protected Dictionary<string, string> headers;
-        protected string contentType;
+        private readonly string _endpoint;
+        private readonly Dictionary<string, string> headers;
+        private string _contentType;
 
-        protected const string CONTENT_TYPE_APP_JSON = "application/json";
+        private readonly string CONTENT_TYPE_APP_JSON = "application/json";
 
         private readonly IHttpClientFactory _httpClientFactory; 
         public RestClientHttpFactory(IHttpClientFactory httpClientFactory, string endpoint, Dictionary<string, string> headers)
         {
             _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));   
-            this.endpoint = endpoint;
+            this._endpoint = endpoint;
             this.headers = new Dictionary<string, string>();
 
             if (headers != null)
@@ -42,7 +42,7 @@ namespace Decidir.Clients
 
         public RestClientHttpFactory(IHttpClientFactory httpClientFactory, string endpoint, Dictionary<string, string> headers, string contentType) : this(httpClientFactory, endpoint, headers)
         {
-            this.contentType = contentType;
+            this._contentType = contentType;
         }
         private HttpClient CreateClient(string uri)
         {
@@ -63,7 +63,7 @@ namespace Decidir.Clients
         }
         private StringContent GetStringContent(string data)
         {
-            return new StringContent(data, Encoding.GetEncoding("iso-8859-1"), string.IsNullOrEmpty(contentType) ? CONTENT_TYPE_APP_JSON : contentType);
+            return new StringContent(data, Encoding.GetEncoding("iso-8859-1"), string.IsNullOrEmpty(_contentType) ? CONTENT_TYPE_APP_JSON : _contentType);
         }
 
 
@@ -80,7 +80,7 @@ namespace Decidir.Clients
 
         public void AddContentType(string contentType)
         {
-            this.contentType = contentType;
+            this._contentType = contentType;
         }
 
         public RestResponse Get(string url, string data) => GetAsync(url, data).GetAwaiter().GetResult();
@@ -88,13 +88,10 @@ namespace Decidir.Clients
         public RestResponse Delete(string url) => DeleteAsync(url).GetAwaiter().GetResult();
         public RestResponse Put(string url, string data = null) => PutAsync(url,data).GetAwaiter().GetResult();
 
-        public async Task<RestResponse> GetAsync(string url, string data, CancellationToken cancellationToken = default)
-        {
-            return await DoRequest(EHttpMethod.GET, url, null, cancellationToken);
-        }
+       
         private async Task<RestResponse> DoRequest(EHttpMethod httpMethod, string url, string data = null, CancellationToken cancellationToken = default)
         {
-            using (var client = CreateClient(endpoint))
+            using (var client = CreateClient(_endpoint))
             {           
                 RestResponse result = new RestResponse();
                 result.Response = String.Empty;
@@ -157,10 +154,13 @@ namespace Decidir.Clients
             }
 
         }
-
+        public async Task<RestResponse> GetAsync(string url, string data, CancellationToken cancellationToken = default)
+        {
+            return await DoRequest(EHttpMethod.GET, url, null, cancellationToken);
+        }
         public async Task<RestResponse> PostAsync(string url, string data, CancellationToken cancellationToken = default)
         {
-            return await DoRequest(EHttpMethod.POST, url, null, cancellationToken);
+            return await DoRequest(EHttpMethod.POST, url, data, cancellationToken);
         }
 
         public async Task<RestResponse> DeleteAsync(string url, CancellationToken cancellationToken = default)
@@ -171,7 +171,7 @@ namespace Decidir.Clients
      
         public async Task<RestResponse> PutAsync(string url, string data = null, CancellationToken cancellationToken = default)
         {
-            return await DoRequest(EHttpMethod.PUT, url, null, cancellationToken);  
+            return await DoRequest(EHttpMethod.PUT, url, data, cancellationToken);  
         }
 
 

@@ -9,10 +9,16 @@ namespace WebApplication2.Controllers
 {
     public class SubmitPaymentController : Controller
     {
+        private readonly IHttpClientFactory _httpClientFactory;
+
+        public SubmitPaymentController(IHttpClientFactory httpClientFactory)
+        {
+            _httpClientFactory = httpClientFactory;
+        }
         [HttpPost]
         public IActionResult PerformPayment()
         {
-            int ambiente = Ambiente.AMBIENTE_PRODUCCION;
+            int ambiente = Ambiente.AMBIENTE_SANDBOX;
             DecidirConnector decidir = null;
             string siteid = null;
             string privatekey = "";
@@ -24,7 +30,7 @@ namespace WebApplication2.Controllers
                     privatekey = "815898d1f3f14e718446f341f5f699e7";
                     publickey = "c035848c2d7d417c8803cfe258a3864c";
                     siteid = "93005849";
-                    decidir = new DecidirConnector(ambiente, privatekey, publickey);
+                    decidir = new DecidirConnector(_httpClientFactory, ambiente, privatekey, publickey);
                     payment = GetPaymentPRO(siteid);    
                     break;
 
@@ -32,7 +38,7 @@ namespace WebApplication2.Controllers
                     privatekey = "QqteObli0eb9429AvP2MAPKkUoSz8r3V";
                     publickey = "M5uUE5FilmeiXbaiTAjjY0CMd07zZHXW";
                     siteid = "93007223";
-                    decidir = new DecidirConnector(ambiente, privatekey, publickey, "", "", "", "");
+                    decidir = new DecidirConnector(_httpClientFactory, ambiente, privatekey, publickey, "", "", "", "");
                     payment = GetPaymentUAT(siteid);
                     break;
 
