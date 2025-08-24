@@ -4,24 +4,25 @@ using Decidir.Exceptions;
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.Net.Http;
+using System.Threading.Tasks;
+using Decidir.Services.Contracts;
 
 namespace Decidir.Services
 {
-    internal class HealthCheck : Service
+   
+    internal class HealthCheck : Service, IHealthCheck
     {
-        public HealthCheck(string endpoint, Dictionary<string, string> headers) : base(endpoint)
+        public HealthCheck(IHttpClientFactory httpClientFactory, string endpoint, Dictionary<string, string> headers) : base(httpClientFactory, endpoint)
         {
-            this.restClient = new RestClient(this.endpoint, headers, CONTENT_TYPE_APP_JSON);
+            this.restClient = GetRestClient(headers, CONTENT_TYPE_APP_JSON);
         }
 
-        public HealthCheckResponse Execute()
+        private HealthCheckResponse IntExecute(RestResponse result)
         {
-            HealthCheckResponse response = new HealthCheckResponse();
-            RestResponse result = this.restClient.Get("healthcheck", "");
-
             if (result.StatusCode == STATUS_OK && !String.IsNullOrEmpty(result.Response))
             {
-                response = HealthCheckResponse.toHealthCheckResponse(result.Response);
+                return HealthCheckResponse.toHealthCheckResponse(result.Response);
             }
             else
             {
@@ -30,8 +31,15 @@ namespace Decidir.Services
                 else
                     throw new ResponseException(result.StatusCode + " - " + result.Response);
             }
-             
-            return response;
+
+        }
+        public HealthCheckResponse Execute()
+        {
+            return IntExecute(this.restClient.Get("healthcheck", ""));
+        }
+        public async Task<HealthCheckResponse> ExecuteAsync()
+        {
+            return IntExecute(await this.restClient.GetAsync("healthcheck", ""));
         }
     }
 }

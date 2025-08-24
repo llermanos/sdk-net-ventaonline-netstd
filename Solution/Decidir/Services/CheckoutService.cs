@@ -1,34 +1,32 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Decidir.Clients;
+﻿using Decidir.Clients;
 using Decidir.Exceptions;
 using Decidir.Model;
+using Decidir.Services.Contracts;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Decidir.Services
 {
-    internal class CheckoutService : Service
+    internal class CheckoutService : Service, ICheckoutService
     {
         private string PrivateApiKey;
-        private RestClient RestClientCheckout;
+        private IRestClient RestClientCheckout;
         Dictionary<string, string> Headers;
         private string EndPointCheckout;
 
-        public CheckoutService(string Endpoint, string PrivateApiKey, Dictionary<string, string> Headers) : base(Endpoint)
+        public CheckoutService(IHttpClientFactory httpClientFactory, string Endpoint, string PrivateApiKey, Dictionary<string, string> Headers) : base(httpClientFactory, Endpoint)
         {
             this.PrivateApiKey = PrivateApiKey;
             this.EndPointCheckout = Endpoint;
-            this.restClient = new RestClient(this.EndPointCheckout, this.Headers, CONTENT_TYPE_APP_JSON);
+            this.restClient = GetRestClient(this.EndPointCheckout, this.Headers, CONTENT_TYPE_APP_JSON);
             this.Headers = Headers;
         }
-        public CheckoutResponse CheckoutHash(CheckoutRequest checkoutRequest)
+        private CheckoutResponse IntCheckoutHash(CheckoutResponse checkoutResponse, RestResponse result)
         {
-            CheckoutResponse checkoutResponse = new CheckoutResponse();
-            this.Headers["apikey"] = this.PrivateApiKey;
-            this.RestClientCheckout = new RestClient(this.EndPointCheckout, this.Headers, CONTENT_TYPE_APP_JSON);
-            RestResponse result = this.RestClientCheckout.Post("payments/link", CheckoutRequest.toJson(checkoutRequest));
 
             Console.WriteLine("RESULTADO DE GENERACION DE LINK: " + result.StatusCode + " " + result.Response);
 
@@ -76,6 +74,25 @@ namespace Decidir.Services
                 }
             }
             return checkoutResponse;
+        }
+
+        public CheckoutResponse CheckoutHash(CheckoutRequest checkoutRequest)
+        {
+            CheckoutResponse checkoutResponse = new CheckoutResponse();
+            this.Headers["apikey"] = this.PrivateApiKey;
+            this.RestClientCheckout = GetRestClient(this.EndPointCheckout, this.Headers, CONTENT_TYPE_APP_JSON);
+            RestResponse result = this.RestClientCheckout.Post("payments/link", CheckoutRequest.toJson(checkoutRequest));
+
+            return IntCheckoutHash(checkoutResponse, result);
+        }
+        public async Task<CheckoutResponse> CheckoutHashAsync(CheckoutRequest checkoutRequest, CancellationToken cancellationToken)
+        {
+            CheckoutResponse checkoutResponse = new CheckoutResponse();
+            this.Headers["apikey"] = this.PrivateApiKey;
+            this.RestClientCheckout = GetRestClient(this.EndPointCheckout, this.Headers, CONTENT_TYPE_APP_JSON);
+            RestResponse result = await this.RestClientCheckout.PostAsync("payments/link", CheckoutRequest.toJson(checkoutRequest), cancellationToken);
+
+            return IntCheckoutHash(checkoutResponse, result);
         }
     }
 }

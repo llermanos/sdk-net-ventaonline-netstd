@@ -1,11 +1,13 @@
 ﻿using Decidir.Clients;
+using System.Collections.Generic;
+using System.Net.Http;
 
 namespace Decidir.Services
 {
-    internal class Service
+    internal abstract class Service
     {
         protected string endpoint;
-        protected RestClient restClient;
+        protected IRestClient restClient;
 
         protected const string CONTENT_TYPE_APP_JSON = "application/json";
         protected const string METHOD_POST = "POST";
@@ -18,8 +20,10 @@ namespace Decidir.Services
         protected const string STATUS_CHALLENGE_PENDING = "CHALLENGE PENDING";
         protected const string STATUS_FINGERPRINT_PENDING = "FINGERPRINT PENDING";
 
-        public Service(string endpoint)
+        protected readonly IHttpClientFactory _httpClientFactory;   
+        public Service(IHttpClientFactory httpClientFactory, string endpoint)
         {
+            _httpClientFactory = httpClientFactory; 
             this.endpoint = endpoint;
         }
 
@@ -32,6 +36,26 @@ namespace Decidir.Services
                     return true;
                 else
                     return false;
+        }
+
+        protected IRestClient GetRestClient(Dictionary<string, string> headers) => GetRestClient(this.endpoint, headers);
+        protected IRestClient GetRestClient(Dictionary<string, string> headers, string contenttype) => GetRestClient(this.endpoint, headers, contenttype);
+
+        protected IRestClient GetRestClient(string endpoint, Dictionary<string, string> headers)
+        {
+            if (_httpClientFactory is null)
+            {
+                return new RestClient(endpoint, headers);
+            }
+            return new RestClientHttpFactory(_httpClientFactory, endpoint, headers);
+        }
+        protected IRestClient GetRestClient(string endpoint, Dictionary<string, string> headers, string contenttype)
+        {
+            if (_httpClientFactory is null)
+            {
+                return new RestClient(endpoint, headers, contenttype);
+            }
+            return new RestClientHttpFactory(_httpClientFactory, endpoint, headers, contenttype);
         }
     }
 }

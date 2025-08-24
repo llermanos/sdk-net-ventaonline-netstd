@@ -1,24 +1,26 @@
 ﻿using Decidir.Clients;
 using Decidir.Exceptions;
 using Decidir.Model;
+using Decidir.Services.Contracts;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Decidir.Services
 {
-    internal class CardTokens : Service
+  
+    internal class CardTokens : Service, ICardTokens
     {
-        public CardTokens(string endpoint, string privateApiKey, Dictionary<string, string> headers) : base(endpoint)
+        public CardTokens(IHttpClientFactory httpClientFactory, string endpoint, string privateApiKey, Dictionary<string, string> headers) : base(httpClientFactory, endpoint)
         {
-            this.restClient = new RestClient(this.endpoint, headers, CONTENT_TYPE_APP_JSON);
+            this.restClient = GetRestClient(headers, CONTENT_TYPE_APP_JSON);
         }
-
-        public bool DeleteCardToken(string tokenizedCard)
+        private bool IntDeleteCardToken(RestResponse result)
         {
             bool deleted = false;
-            RestResponse result = this.restClient.Delete(String.Format("cardtokens/{0}", tokenizedCard));
-
             if (result.StatusCode == STATUS_NOCONTENT)
             {
                 deleted = true;
@@ -32,6 +34,14 @@ namespace Decidir.Services
             }
 
             return deleted;
+        }
+        public bool DeleteCardToken(string tokenizedCard)
+        {
+            return IntDeleteCardToken(this.restClient.Delete(String.Format("cardtokens/{0}", tokenizedCard)));
+        }
+        public async Task<bool> DeleteCardToken(string tokenizedCard, CancellationToken cancellationToken)
+        {
+            return IntDeleteCardToken(await this.restClient.DeleteAsync(String.Format("cardtokens/{0}", tokenizedCard), cancellationToken));
         }
     }
 }

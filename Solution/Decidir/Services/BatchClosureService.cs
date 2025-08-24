@@ -1,47 +1,31 @@
 ﻿using Decidir.Clients;
 using Decidir.Exceptions;
 using Decidir.Model;
+using Decidir.Services.Contracts;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Decidir.Services
 {
-    internal class BatchClosure : Service
+    internal class BatchClosure : Service, IBatchClosure
     {
-        private string privateApiKey;
-        private string publicApiKey;
-        private string validateApiKey;
-        private string merchant;
-        private string request_host;
-        private RestClient restClientValidate;
-        private RestClient restClientGetTokenBSA;
-
-        public BatchClosure(String endpoint, String privateApiKey, String validateApiKey = null, String merchant = null, string request_host = null, string publicApiKey = null) : base(endpoint)
+        public BatchClosure(IHttpClientFactory httpClientFactory, String endpoint, String privateApiKey, String validateApiKey = null, String merchant = null, string request_host = null, string publicApiKey = null) : base(httpClientFactory, endpoint)
         {
-            this.privateApiKey = privateApiKey;
-            this.validateApiKey = validateApiKey;
-            this.merchant = merchant;
-            this.request_host = request_host;
-            this.publicApiKey = publicApiKey;
-
 
             Dictionary<string, string> headers = new Dictionary<string, string>();
-            headers.Add("apikey", this.privateApiKey);
+            headers.Add("apikey", privateApiKey);
             headers.Add("Cache-Control", "no-cache");
 
-            this.restClient = new RestClient(this.endpoint, headers, CONTENT_TYPE_APP_JSON);
+            this.restClient = GetRestClient(headers, CONTENT_TYPE_APP_JSON);
         }
 
-        public BatchClosureResponse BatchClosureActive(String batchClosure)
+        private BatchClosureResponse IntBatchClosureActive(RestResponse result)
         {
             BatchClosureResponse refund = null;
-
-
-            RestResponse result = this.restClient.Post(String.Format("closures/batchclosure"), batchClosure);
-
             if (result.StatusCode == STATUS_CREATED && !String.IsNullOrEmpty(result.Response))
             {
                 refund = JsonConvert.DeserializeObject<BatchClosureResponse>(result.Response);
@@ -53,6 +37,16 @@ namespace Decidir.Services
 
             return refund;
 
+        }
+
+        public BatchClosureResponse BatchClosureActive(String batchClosure)
+        {
+            return IntBatchClosureActive(this.restClient.Post(String.Format("closures/batchclosure"), batchClosure));
+
+        }
+        public async Task<BatchClosureResponse> BatchClosureActiveAsync(string batchClosure, CancellationToken cancellationToken)
+        {
+            return IntBatchClosureActive(await this.restClient.PostAsync(String.Format("closures/batchclosure"), batchClosure, cancellationToken));        
         }
     }
 }

@@ -4,6 +4,7 @@ using Decidir.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 
 namespace Decidir
 {
@@ -67,6 +68,7 @@ namespace Decidir
 
         private Dictionary<string, string> headers;
 
+        private readonly IHttpClientFactory _httpClientFactory;
         public DecidirConnector(int ambiente, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
         {
             init(ambiente, privateApiKey, publicApiKey, validateApiKey, merchant, grouper, developer);
@@ -78,6 +80,21 @@ namespace Decidir
             this.endpoint = request_host + request_path;
             init(-1, privateApiKey, publicApiKey, validateApiKey, merchant, grouper, developer);
         }
+
+        public DecidirConnector(IHttpClientFactory httpClientFactory, int ambiente, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
+        : this(ambiente,privateApiKey, publicApiKey,validateApiKey,merchant,grouper,developer)
+        {
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));   
+        }
+
+        public DecidirConnector(IHttpClientFactory httpClientFactory, string request_host, string request_path, string privateApiKey, string publicApiKey, string validateApiKey = null, string merchant = null, string grouper = "", string developer = "")
+        : this(request_host,request_path,privateApiKey,publicApiKey,validateApiKey,merchant,grouper,developer)  
+        {
+            _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        }
+
+
+
 
         private void init(int ambiente, string privateApiKey, string publicApiKey, string validateApiKey, string merchant, string grouper, string developer)
         {
@@ -93,7 +110,7 @@ namespace Decidir
             headers.Add("Cache-Control", "no-cache");
             headers.Add("X-Source", getXSource(grouper, developer));
 
-            this.bathClosureService = new BatchClosure(this.endpoint, this.privateApiKey, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
+            this.bathClosureService = new BatchClosure(_httpClientFactory, this.endpoint, this.privateApiKey, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
 
             switch (ambiente)
             {
@@ -108,7 +125,7 @@ namespace Decidir
                     this.request_host = request_host_qa;
                     this.endPointInternalToken = endPointInternalTokenQA;
                     this.endPointCheckout = endPointCheckoutQA;
-                    this.bathClosureService = new BatchClosure(endPointQAClosure, this.privateApiKey, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
+                    this.bathClosureService = new BatchClosure(_httpClientFactory, endPointQAClosure, this.privateApiKey, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
                     break;
                 case Ambiente.AMBIENTE_SANDBOX:
                     this.endpoint = endPointSandbox;
@@ -124,11 +141,11 @@ namespace Decidir
                     break;
             }
            
-            this.healthCheckService = new HealthCheck(this.endpoint, this.headers);
-            this.paymentService = new Payments(this.endpoint, this.endPointInternalToken, this.privateApiKey, this.headers, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
-            this.userSiteService = new UserSite(this.endpoint, this.privateApiKey, this.headers);
-            this.cardTokensService = new CardTokens(this.endpoint, this.privateApiKey,this.headers);
-            this.checkoutService = new CheckoutService(this.endPointCheckout, this.privateApiKey, this.headers);
+            this.healthCheckService = new HealthCheck(_httpClientFactory, this.endpoint, this.headers);
+            this.paymentService = new Payments(_httpClientFactory, this.endpoint, this.endPointInternalToken, this.privateApiKey, this.headers, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
+            this.userSiteService = new UserSite(_httpClientFactory, this.endpoint, this.privateApiKey, this.headers);
+            this.cardTokensService = new CardTokens(_httpClientFactory, this.endpoint, this.privateApiKey,this.headers);
+            this.checkoutService = new CheckoutService(_httpClientFactory, this.endPointCheckout, this.privateApiKey, this.headers);
         }
 
 
