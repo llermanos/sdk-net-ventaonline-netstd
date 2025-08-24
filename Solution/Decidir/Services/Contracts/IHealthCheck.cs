@@ -11,6 +11,6 @@ namespace Decidir.Services.Contracts
     internal interface IHealthCheck
     {
         HealthCheckResponse Execute();
-        Task<HealthCheckResponse> ExecuteAsync();
+        Task<HealthCheckResponse> ExecuteAsync(CancellationToken cancellationToken);
     }
 }

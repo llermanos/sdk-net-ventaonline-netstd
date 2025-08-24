@@ -1,14 +1,67 @@
 ﻿using Decidir.Constants;
 using Decidir.Model;
 using Decidir.Services;
+using Decidir.Services.Contracts;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Decidir
 {
-    public class DecidirConnector
+    public interface IDecidirConnector
+    {
+        BatchClosureResponse BatchClosure(string batchClosure);
+        Task<BatchClosureResponse> BatchClosureAsync(string batchClosure,CancellationToken cancellationToken);
+        CapturePaymentResponse CapturePayment(long paymentId, long amount);
+        Task<CapturePaymentResponse> CapturePaymentAsync(long paymentId, long amount, CancellationToken cancellationToken);
+        CheckoutResponse CheckoutHash(CheckoutRequest CheckoutRequest);
+        Task<CheckoutResponse> CheckoutHashAsync(CheckoutRequest CheckoutRequest, CancellationToken cancellationToken);
+
+        GetCryptogramResponse Cryptogram(CryptogramRequest cryptogramRequest);
+        Task<GetCryptogramResponse> CryptogramAsync(CryptogramRequest cryptogramRequest, CancellationToken cancellationToken);
+
+        bool DeleteCardToken(string token);
+        Task<bool> DeleteCardTokenAsync(string token, CancellationToken cancellationToken);
+        RefundResponse DeletePartialRefund(long paymentId, long? refundId);
+        Task<RefundResponse> DeletePartialRefundAsync(long paymentId, long? refundId, CancellationToken cancellationToken);
+        RefundResponse DeleteRefund(long paymentId, long? refundId);
+        Task<RefundResponse> DeleteRefundAsync(long paymentId, long? refundId, CancellationToken cancellationToken);
+        GetAllCardTokensResponse GetAllCardTokens(string userId);
+        Task<GetAllCardTokensResponse> GetAllCardTokensAsync(string userId, CancellationToken cancellationToken);
+        GetAllPaymentsResponse GetAllPayments(long? offset = null, long? pageSize = null, string siteOperationId = null, string merchantId = null);
+        Task<GetAllPaymentsResponse> GetAllPaymentsAsync(long? offset = null, long? pageSize = null, string siteOperationId = null, string merchantId = null, CancellationToken cancellationToken = default);
+        GetInternalTokenResponse GetInternalToken(InternalTokenRequest token);
+        Task<GetInternalTokenResponse> GetInternalTokenAsync(InternalTokenRequest token, CancellationToken cancellationToken);
+        PaymentResponse GetPaymentInfo(long paymentId);
+        Task<PaymentResponse> GetPaymentInfoAsync(long paymentId, CancellationToken cancellationToken);
+        GetTokenResponse GetToken(TokenRequest token);
+        Task<GetTokenResponse> GetTokenAsync(TokenRequest token, CancellationToken cancellationToken);
+        GetTokenResponse GetTokenByCardTokenBsa(CardTokenBsa card_token_bsa);
+        Task<GetTokenResponse> GetTokenByCardTokenBsaAsync(CardTokenBsa card_token_bsa, CancellationToken cancellationToken);
+        HealthCheckResponse HealthCheck();
+        Task<HealthCheckResponse> HealthCheckAsync(CancellationToken cancellationToken);
+        PaymentResponse InstructionThreeDS(string xConsumerUsername, Instruction3dsData instruction3DsData);
+        Task<PaymentResponse> InstructionThreeDSAsync(string xConsumerUsername, Instruction3dsData instruction3DsData, CancellationToken cancellationToken);
+        RefundPaymentResponse PartialRefund(long paymentId, RefundAmount amount);
+        Task<RefundPaymentResponse> PartialRefundAsync(long paymentId, RefundAmount amount, CancellationToken cancellationToken);
+        PaymentResponse Payment(OfflinePayment payment);
+        PaymentResponse Payment(Payment payment);
+        Task<PaymentResponse> Payment(OfflinePayment payment, CancellationToken cancellationToken);
+        Task<PaymentResponse> PaymentAsync(Payment payment, CancellationToken cancellationToken);
+
+        RefundPaymentResponse Refund(long paymentId);
+        Task<RefundPaymentResponse> RefundAsync(long paymentId, CancellationToken cancellationToken);
+        RefundPaymentResponse RefundSubPayment(long paymentId, RefundSubPaymentRequest refundSubPaymentRequest);
+        Task<RefundPaymentResponse> RefundSubPaymentAsync(long paymentId, RefundSubPaymentRequest refundSubPaymentRequest, CancellationToken cancellationToken);
+        ValidateResponse Validate(ValidateData validateData);
+        Task<ValidateResponse> ValidateAsync(ValidateData validateData, CancellationToken cancellationToken);
+
+    }
+
+    public class DecidirConnector : IDecidirConnector
     {
         #region Constants
         public const string versionDecidir = "1.4.8";
@@ -138,11 +191,11 @@ namespace Decidir
                     this.endPointCheckout = endPointCheckoutDesa;
                     break;
             }
-           
+
             this.healthCheckService = new HealthCheck(_httpClientFactory, this.endpoint, this.headers);
             this.paymentService = new Payments(_httpClientFactory, this.endpoint, this.endPointInternalToken, this.privateApiKey, this.headers, this.validateApiKey, this.merchant, this.request_host, this.publicApiKey);
             this.userSiteService = new UserSite(_httpClientFactory, this.endpoint, this.privateApiKey, this.headers);
-            this.cardTokensService = new CardTokens(_httpClientFactory, this.endpoint, this.privateApiKey,this.headers);
+            this.cardTokensService = new CardTokens(_httpClientFactory, this.endpoint, this.privateApiKey, this.headers);
             this.checkoutService = new CheckoutService(_httpClientFactory, this.endPointCheckout, this.privateApiKey, this.headers);
         }
 
@@ -151,7 +204,7 @@ namespace Decidir
         {
             return this.healthCheckService.Execute();
         }
-        
+
         public PaymentResponse Payment(Payment payment)
         {
             return this.paymentService.ExecutePayment(payment);
@@ -189,7 +242,7 @@ namespace Decidir
 
         public RefundPaymentResponse RefundSubPayment(long paymentId, RefundSubPaymentRequest refundSubPaymentRequest)
         {
-            return this.paymentService.Refund(paymentId, this.ObjectToJson(refundSubPaymentRequest));    
+            return this.paymentService.Refund(paymentId, this.ObjectToJson(refundSubPaymentRequest));
         }
 
         public BatchClosureResponse BatchClosure(string batchClosure)
@@ -274,6 +327,115 @@ namespace Decidir
         private String ObjectToJson(Object obj)
         {
             return JsonConvert.SerializeObject(obj, Newtonsoft.Json.Formatting.None);
+        }
+
+        #endregion
+
+        #region "Async Methods" 
+
+        public async Task<BatchClosureResponse> BatchClosureAsync(string batchClosure, CancellationToken cancellationToken)
+        {
+            return await this.bathClosureService.BatchClosureActiveAsync(batchClosure,cancellationToken);
+        }
+
+        public async Task<CapturePaymentResponse> CapturePaymentAsync(long paymentId, long amount, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.CapturePaymentAsync(paymentId, amount, cancellationToken);
+        }
+
+        public async Task<CheckoutResponse> CheckoutHashAsync(CheckoutRequest CheckoutRequest, CancellationToken cancellationToken)
+        {
+            return await this.checkoutService.CheckoutHashAsync(CheckoutRequest, cancellationToken);
+        }
+
+        public async Task<GetCryptogramResponse> CryptogramAsync(CryptogramRequest cryptogramRequest, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.GetCryptogramAsync(cryptogramRequest, cancellationToken);
+        }
+
+        public async Task<bool> DeleteCardTokenAsync(string token, CancellationToken cancellationToken)
+        {
+            return await this.cardTokensService.DeleteCardTokenAsync(token, cancellationToken);
+        }
+
+        public async Task<RefundResponse> DeletePartialRefundAsync(long paymentId, long? refundId, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.DeletePartialRefundAsync(paymentId, refundId, cancellationToken);
+        }
+
+        public async Task<RefundResponse> DeleteRefundAsync(long paymentId, long? refundId, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.DeleteRefundAsync(paymentId,refundId, cancellationToken);
+        }
+
+        public async Task<GetAllCardTokensResponse> GetAllCardTokensAsync(string userId, CancellationToken cancellationToken)
+        {
+            return await this.userSiteService.GetAllTokensAsync(userId, cancellationToken);
+        }
+
+        public async Task<GetAllPaymentsResponse> GetAllPaymentsAsync(long? offset = null, long? pageSize = null, string siteOperationId = null, string merchantId = null, CancellationToken cancellationToken = default)
+        {
+            return await this.paymentService.GetAllPaymentsAsync(offset, pageSize, siteOperationId, merchantId, cancellationToken);
+        }
+
+        public async Task<GetInternalTokenResponse> GetInternalTokenAsync(InternalTokenRequest token, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.GetInternalTokenAsync(token, cancellationToken);
+        }
+
+        public async Task<PaymentResponse> GetPaymentInfoAsync(long paymentId, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.GetPaymentInfoAsync(paymentId, cancellationToken);
+        }
+
+        public async Task<GetTokenResponse> GetTokenAsync(TokenRequest token, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.GetTokenAsync(token, cancellationToken);
+        }
+
+        public async Task<GetTokenResponse> GetTokenByCardTokenBsaAsync(CardTokenBsa card_token_bsa, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.GetTokenByCardTokenBsaAsync(card_token_bsa, cancellationToken);
+        }
+
+        public async Task<HealthCheckResponse> HealthCheckAsync(CancellationToken cancellationToken)
+        {
+            return await this.healthCheckService.ExecuteAsync(cancellationToken);
+        }
+
+        public async Task<PaymentResponse> InstructionThreeDSAsync(string xConsumerUsername, Instruction3dsData instruction3DsData, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.InstructionThreeDSAsync(xConsumerUsername, instruction3DsData, cancellationToken);
+        }
+
+        public async Task<RefundPaymentResponse> PartialRefundAsync(long paymentId, RefundAmount amount, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.RefundAsync(paymentId, this.ObjectToJson(amount), cancellationToken);
+        }
+
+        public async Task<PaymentResponse> Payment(OfflinePayment payment, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.ExecutePaymentAsync(payment, cancellationToken);
+        }
+
+        public async Task<PaymentResponse> PaymentAsync(Payment payment, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.ExecutePaymentAsync(payment, cancellationToken);
+        }
+
+        public async Task<RefundPaymentResponse> RefundAsync(long paymentId, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.RefundAsync(paymentId, emptyObject, cancellationToken);
+        }
+
+        public async Task<RefundPaymentResponse> RefundSubPaymentAsync(long paymentId, RefundSubPaymentRequest refundSubPaymentRequest, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.RefundAsync(paymentId, this.ObjectToJson(refundSubPaymentRequest), cancellationToken);
+        }
+
+        public async Task<ValidateResponse> ValidateAsync(ValidateData validateData, CancellationToken cancellationToken)
+        {
+            return await this.paymentService.ValidatePaymentAsync(validateData, cancellationToken);
         }
 
         #endregion

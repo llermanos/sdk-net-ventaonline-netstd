@@ -6,6 +6,7 @@ using Decidir.Model;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Decidir.Services.Contracts;
+using System.Threading;
 
 namespace Decidir.Services
 {
@@ -30,9 +31,9 @@ namespace Decidir.Services
         {
             return IntGetAllTokens(this.restClient.Get("usersite", String.Format("/{0}/cardtokens", userId)));
         }
-        public async Task<GetAllCardTokensResponse> GetAllTokensAsync(string userId)
+        public async Task<GetAllCardTokensResponse> GetAllTokensAsync(string userId, CancellationToken cancellationToken)
         {
-            return IntGetAllTokens(await this.restClient.GetAsync("usersite", String.Format("/{0}/cardtokens", userId)));
+            return IntGetAllTokens(await this.restClient.GetAsync("usersite", String.Format("/{0}/cardtokens", userId),cancellationToken));
         }
     }
 }

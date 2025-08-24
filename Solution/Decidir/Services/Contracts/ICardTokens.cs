@@ -6,6 +6,6 @@ namespace Decidir.Services.Contracts
     internal interface ICardTokens
     {
         bool DeleteCardToken(string tokenizedCard);
-        Task<bool> DeleteCardToken(string tokenizedCard, CancellationToken cancellationToken);
+        Task<bool> DeleteCardTokenAsync(string tokenizedCard, CancellationToken cancellationToken);
     }
 }

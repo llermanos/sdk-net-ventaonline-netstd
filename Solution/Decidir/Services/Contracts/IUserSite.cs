@@ -11,6 +11,6 @@ namespace Decidir.Services.Contracts
     internal interface IUserSite
     {
         GetAllCardTokensResponse GetAllTokens(string userId);
-        Task<GetAllCardTokensResponse> GetAllTokensAsync(string userId);
+        Task<GetAllCardTokensResponse> GetAllTokensAsync(string userId, CancellationToken cancellationToken);
     }
 }

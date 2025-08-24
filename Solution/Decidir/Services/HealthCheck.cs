@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Decidir.Services.Contracts;
+using System.Threading;
 
 namespace Decidir.Services
 {
@@ -37,9 +38,9 @@ namespace Decidir.Services
         {
             return IntExecute(this.restClient.Get("healthcheck", ""));
         }
-        public async Task<HealthCheckResponse> ExecuteAsync()
+        public async Task<HealthCheckResponse> ExecuteAsync(CancellationToken cancellationToken)
         {
-            return IntExecute(await this.restClient.GetAsync("healthcheck", ""));
+            return IntExecute(await this.restClient.GetAsync("healthcheck", "", cancellationToken));
         }
     }
 }

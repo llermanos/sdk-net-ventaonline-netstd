@@ -39,7 +39,7 @@ namespace Decidir.Services
         {
             return IntDeleteCardToken(this.restClient.Delete(String.Format("cardtokens/{0}", tokenizedCard)));
         }
-        public async Task<bool> DeleteCardToken(string tokenizedCard, CancellationToken cancellationToken)
+        public async Task<bool> DeleteCardTokenAsync(string tokenizedCard, CancellationToken cancellationToken)
         {
             return IntDeleteCardToken(await this.restClient.DeleteAsync(String.Format("cardtokens/{0}", tokenizedCard), cancellationToken));
         }
